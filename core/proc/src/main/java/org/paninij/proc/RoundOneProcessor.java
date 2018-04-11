@@ -29,6 +29,9 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -82,6 +85,11 @@ public class RoundOneProcessor extends AbstractProcessor {
         }
 
         // TODO: What about if an error was raised in the prior round? See: roundEnv.errorRaised()
+        // see link: https://stackoverflow.com/questions/47779403/annotation-processing-roundenvironment-processingover
+        // since we are not generating publicly visible classes, it may be
+        // better to stop compilation as soon as possible.
+        // however, for devs, it might be better to gather as much information as possible about
+        // all errors, and display all errors to the user so they can fix things
 
         // Perform all remaining code-gen on OK capsule cores:
         for (TypeElement core : getOkCapsuleCores(roundEnv)) {
@@ -188,5 +196,20 @@ public class RoundOneProcessor extends AbstractProcessor {
 
     public void error(String msg, Element offender) {
         processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR, msg, offender);
+    }
+    
+    /**
+     * Helper method that takes an Exception
+     * and converts the stack trace into a
+     * String.
+     * @param e
+     *  Exception e
+     * @return
+     *  String representation of the stack trace.
+     */
+    private String getStackTrace(Exception e) {
+        StringWriter error = new StringWriter();
+        e.printStackTrace(new PrintWriter(error));
+        return error.toString();
     }
 }

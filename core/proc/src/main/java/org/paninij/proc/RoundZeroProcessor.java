@@ -21,6 +21,9 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Set;
 
 /**
@@ -58,25 +61,33 @@ public class RoundZeroProcessor extends AbstractProcessor {
         // For each element annotated `@Capsule`, check it. If it is okay, then create its capsule
         // interface and file it. Otherwise, error.
         for (Element elem : roundEnv.getElementsAnnotatedWith(org.paninij.lang.Capsule.class)) {
-            Result result = capsuleChecks.checkCapsule(elem);
-            if (result.ok()) {
-                // Make the capsule interface from this capsule core.
-                Capsule model = CapsuleElement.make((TypeElement) elem);
-                artifactMaker.add(capsuleInterfaceFactory.make(model));
-            } else {
-                error(result.errMsg(), result.offender());
+            try {
+              Result result = capsuleChecks.checkCapsule(elem);
+                if (result.ok()) {
+                    // Make the capsule interface from this capsule core.
+                    Capsule model = CapsuleElement.make((TypeElement) elem);
+                    artifactMaker.add(capsuleInterfaceFactory.make(model));
+                } else {
+                    error(result.errMsg(), result.offender());
+                }
+            } catch (Exception e) {
+                error("Error: \n" + getStackTrace(e),elem);
             }
         }
 
         // For each element annotated `@Signature`, check it. If it is okay, then create its
         // signature interface and file it. Otherwise, error.
         for (Element elem : roundEnv.getElementsAnnotatedWith(org.paninij.lang.Signature.class)) {
-            Result result = signatureChecks.checkSignature(elem);
-            if (result.ok()) {
-                Signature model = SignatureElement.make((TypeElement) elem);
-                artifactMaker.add(signatureInterfaceFactory.make(model));
-            } else {
-                error(result.errMsg(), result.offender());
+            try {
+                Result result = signatureChecks.checkSignature(elem);
+                if (result.ok()) {
+                    Signature model = SignatureElement.make((TypeElement) elem);
+                    artifactMaker.add(signatureInterfaceFactory.make(model));
+                } else {
+                    error(result.errMsg(), result.offender());
+                }
+            }catch(Exception e) {
+                error("Error: \n" + getStackTrace(e), elem);
             }
         }
 
@@ -93,5 +104,20 @@ public class RoundZeroProcessor extends AbstractProcessor {
 
     public void error(String msg, Element offender) {
         processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR, msg, offender);
+    }
+    
+    /**
+     * Helper method that takes an Exception
+     * and converts the stack trace into a
+     * String.
+     * @param e
+     *  Exception e
+     * @return
+     *  String representation of the stack trace.
+     */
+    private String getStackTrace(Exception e) {
+        StringWriter error = new StringWriter();
+        e.printStackTrace(new PrintWriter(error));
+        return error.toString();
     }
 }
