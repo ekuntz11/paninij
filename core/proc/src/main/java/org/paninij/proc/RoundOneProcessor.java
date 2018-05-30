@@ -79,6 +79,7 @@ public class RoundOneProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
     {
+        
         if (roundEnv.processingOver()) {
             artifactMaker.close();
             return false;
@@ -93,21 +94,29 @@ public class RoundOneProcessor extends AbstractProcessor {
 
         // Perform all remaining code-gen on OK capsule cores:
         for (TypeElement core : getOkCapsuleCores(roundEnv)) {
-            Capsule model = CapsuleElement.make(core);
-            for (Procedure procedure : model.getProcedures()) {
-                artifactMaker.add(messageFactory.make(procedure));
+            try {
+               Capsule model = CapsuleElement.make(core);
+                for (Procedure procedure : model.getProcedures()) {
+                    artifactMaker.add(messageFactory.make(procedure));
+                }
+                artifactMaker.add(capsuleThreadFactory.make(model));
+                artifactMaker.add(capsuleSerialFactory.make(model));
+                artifactMaker.add(capsuleMonitorFactory.make(model));
+                artifactMaker.add(capsuleTaskFactory.make(model));
+            } catch (Exception e) {
+                error("Error: \n" + getStackTrace(e), core);
             }
-            artifactMaker.add(capsuleThreadFactory.make(model));
-            artifactMaker.add(capsuleSerialFactory.make(model));
-            artifactMaker.add(capsuleMonitorFactory.make(model));
-            artifactMaker.add(capsuleTaskFactory.make(model));
         }
 
         // Perform all remaining code-gen on OK signature cores:
         for (TypeElement core : getOkSignatureCores(roundEnv)) {
-            Signature model = SignatureElement.make(core);
-            for (Procedure procedure : model.getProcedures()) {
-                artifactMaker.add(messageFactory.make(procedure));
+            try {
+                Signature model = SignatureElement.make(core);
+                for (Procedure procedure : model.getProcedures()) {
+                    artifactMaker.add(messageFactory.make(procedure));
+                }
+            } catch (Exception e) {
+                error("Error: \n" + getStackTrace(e), core);
             }
         }
 

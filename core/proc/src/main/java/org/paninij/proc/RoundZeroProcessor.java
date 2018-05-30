@@ -71,7 +71,9 @@ public class RoundZeroProcessor extends AbstractProcessor {
                     error(result.errMsg(), result.offender());
                 }
             } catch (Exception e) {
-                error("Error: \n" + getStackTrace(e),elem);
+                // If processor crashes, output stacktrace along with class name
+                // that contained offending element.
+                error("Error: \n" + getStackTrace(e), elem);
             }
         }
 
@@ -86,7 +88,9 @@ public class RoundZeroProcessor extends AbstractProcessor {
                 } else {
                     error(result.errMsg(), result.offender());
                 }
-            }catch(Exception e) {
+            } catch (Exception e) {
+                // If processor crashes, output stacktrace along with class name
+                // that contained offending element.
                 error("Error: \n" + getStackTrace(e), elem);
             }
         }
